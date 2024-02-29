@@ -1,0 +1,75 @@
+﻿@page "/"
+
+<PageTitle>Home</PageTitle>
+<RadzenDataGrid Data="@_orders" 
+            TItem="Order" 
+            Style="height: 100vh;" 
+            AllowFiltering="true"
+            FilterMode="FilterMode.SimpleWithMenu"
+            LogicalFilterOperator="LogicalFilterOperator.And"
+            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+            AllowSorting="true">
+    <Columns>
+        <RadzenDataGridColumn TItem="Order" Property="@nameof(Order.OrderId)" Title="Num" />
+         <RadzenDataGridColumn TItem="Order" Property="@nameof(Order.ProductId)" Title="Product" Width="280px"
+                                              Type="typeof(IEnumerable<Guid>)"
+                                              FilterValue="_selectedProducts"
+                                              FilterOperator="FilterOperator.In"
+                                              LogicalFilterOperator="LogicalFilterOperator.Or">
+                            <FilterTemplate>
+                                <RadzenDropDown Style="width:100%;"
+                                                placeholder="Select a product"
+                                                @bind-Value="_selectedProducts"
+                                                Data="_products"
+                                                TextProperty="@nameof(Product.Title)"
+                                                ValueProperty="@nameof(Product.ProductId)"
+                                                Change="OnSelectedProductChange"
+                                                Multiple="true"
+                                                AllowClear="true"/>
+                            </FilterTemplate>
+                            <Template Context="order">
+                                @order.ProductId
+                            </Template>
+                        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Order" Property="Units" Title="Units" />
+        <RadzenDataGridColumn TItem="Order" Property="Price" Title="Price" />
+    </Columns>
+</RadzenDataGrid>
+
+
+@code {
+    private IEnumerable<Guid>? _selectedProducts;
+    private IEnumerable<Product> _products;
+    private IEnumerable<Order> _orders;
+
+    protected override void OnInitialized()
+    {
+        var products = Enumerable.Range(1, 100).Select(index => new Product { ProductId = Guid.NewGuid(), Title = $"Product {index}" }).ToList();
+        var orders = Enumerable.Range(1, 1000).Select(index => new Order { OrderId = index, ProductId = products[Random.Shared.Next(100)].ProductId, Units = Random.Shared.Next(1, 300), Price = Random.Shared.NextDouble() * 1000.0 }).ToList();
+        _products = products.AsQueryable();
+        _orders = orders.AsQueryable();
+    }
+
+    private void OnSelectedProductChange(object value)
+    {
+        if (_selectedProducts != null && !_selectedProducts.Any())
+        {
+            _selectedProducts = null;
+        }
+    }   
+    public class Product
+    {
+        public Guid ProductId { get; set; }
+        public string Title { get; set; } = null!;
+    }
+
+    public class Order
+    {
+        public int OrderId { get; set; }
+        public Guid ProductId { get; set; }
+        public int Units { get; set; }
+        public double Price { get; set; }
+    }
+    
+
+}
